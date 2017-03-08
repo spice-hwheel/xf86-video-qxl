@@ -938,6 +938,9 @@ Bool drmmode_pre_init(ScrnInfoPtr pScrn, drmmode_ptr drmmode, int cpp)
 	for (i = 0; i < drmmode->mode_res->count_connectors; i++)
 	    drmmode_output_init(pScrn, drmmode, i);
 
+#if XF86_CRTC_VERSION >= 5
+	xf86ProviderSetup(pScrn, NULL, "qxl");
+#endif
 	xf86InitialConfiguration(pScrn, TRUE);
 
 	return TRUE;

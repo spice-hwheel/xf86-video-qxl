@@ -68,11 +68,25 @@ static void spiceqxl_uinput_read_cb(int fd, int event, void *opaque)
         spiceqxl_tablet_buttons(buttons_state);
         break;
     case EV_REL:
-        button = 1;
-        if (inp_event.value == 1) {
-            button = 1 << 3;
-        } else {
-            button = 1 << 4;
+        switch (inp_event.code) {
+        case REL_HWHEEL:
+            if (inp_event.value == 1) {
+                button = 1 << 5;
+            } else {
+                button = 1 << 6;
+            }
+            break;
+        case REL_WHEEL:
+            if (inp_event.value == 1) {
+                button = 1 << 3;
+            } else {
+                button = 1 << 4;
+            }
+            break;
+        default:
+            fprintf(stderr, "%s: unknown scroll axis %d, ignoring\n", __func__, inp_event.code);
+            return;
+            break;
         }
         buttons_state |= button;
         spiceqxl_tablet_buttons(buttons_state);

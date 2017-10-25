@@ -68,7 +68,11 @@ static InputDriverRec XSPICE_KEYBOARD = {
     NULL
 };
 
+#if SPICE_SERVER_VERSION >= 0x000e01 /* 0.14.1 */
+#define BUTTONS 7
+#else
 #define BUTTONS 5
+#endif
 
 typedef struct XSpiceKbd {
     SpiceKbdInstance sin;
@@ -100,6 +104,10 @@ static int xspice_pointer_proc(DeviceIntPtr pDevice, int onoff)
             btn_labels[2] = XIGetKnownProperty(BTN_LABEL_PROP_BTN_RIGHT);
             btn_labels[3] = XIGetKnownProperty(BTN_LABEL_PROP_BTN_WHEEL_UP);
             btn_labels[4] = XIGetKnownProperty(BTN_LABEL_PROP_BTN_WHEEL_DOWN);
+#if SPICE_SERVER_VERSION >= 0x000e01 /* 0.14.1 */
+            btn_labels[5] = XIGetKnownProperty(BTN_LABEL_PROP_BTN_HWHEEL_LEFT);
+            btn_labels[6] = XIGetKnownProperty(BTN_LABEL_PROP_BTN_HWHEEL_RIGHT);
+#endif
             axes_labels[0] = XIGetKnownProperty(AXIS_LABEL_PROP_REL_X);
             axes_labels[1] = XIGetKnownProperty(AXIS_LABEL_PROP_REL_Y);
             InitPointerDeviceStruct(pDev, map, BUTTONS,btn_labels,(PtrCtrlProcPtr)NoopDDA,
@@ -272,8 +280,13 @@ typedef struct XSpicePointer {
 
 static XSpicePointer *g_xspice_pointer;
 
+#if SPICE_SERVER_VERSION >= 0x000e01 /* 0.14.1 */
+static void mouse_motion(SpiceMouseInstance *sin, int dx, int dy, int dw, int dz,
+                         uint32_t buttons_state)
+#else
 static void mouse_motion(SpiceMouseInstance *sin, int dx, int dy, int dz,
                          uint32_t buttons_state)
+#endif
 {
     // TODO
 }
@@ -345,13 +358,22 @@ static void tablet_buttons(SpiceTabletInstance *sin,
     spiceqxl_tablet_buttons(buttons_state);
 }
 
-static void tablet_wheel(SpiceTabletInstance* sin, int wheel,
+#if SPICE_SERVER_VERSION >= 0x000e01 /* 0.14.1 */
+static void tablet_wheel(SpiceTabletInstance* sin, int hwheel, int vwheel,
                          uint32_t buttons_state)
+#else
+static void tablet_wheel(SpiceTabletInstance* sin, int vwheel,
+                         uint32_t buttons_state)
+#endif
 {
-    // convert wheel into fourth and fifth buttons
+    // convert wheels into fourth to seventh buttons
     tablet_buttons(sin, buttons_state
-                        | (wheel > 0 ? (1<<4) : 0)
-                        | (wheel < 0 ? (1<<3) : 0));
+#if SPICE_SERVER_VERSION >= 0x000e01 /* 0.14.1 */
+                        | (hwheel > 0 ? (1<<6) : 0)
+                        | (hwheel < 0 ? (1<<5) : 0)
+#endif
+                        | (vwheel > 0 ? (1<<4) : 0)
+                        | (vwheel < 0 ? (1<<3) : 0));
 }
 
 static const SpiceTabletInterface tablet_interface = {
